@@ -55,6 +55,7 @@ jobs:
     - name: Build JavaScript Bundle
       run: |
         cd apps/mobile-frontend
+        mkdir -p android/app/src/main/assets
         npx react-native bundle \
           --platform android \
           --dev false \
@@ -64,7 +65,6 @@ jobs:
     
     - name: Build Android APK
       run: |
-        cd apps/mobile-frontend/android
         mkdir -p app/src/main/assets
         chmod +x ./gradlew
         export GRADLE_OPTS="-Xmx4096m -XX:MaxMetaspaceSize=1024m"

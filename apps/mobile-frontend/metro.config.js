@@ -1,15 +1,11 @@
-const { getDefaultConfig } = require('expo/metro-config');
+const { getDefaultConfig } = require('@react-native/metro-config');
 
-/** @type {import('expo/metro-config').MetroConfig} */
 const config = getDefaultConfig(__dirname);
 
 // Add additional source extensions
 config.resolver.sourceExts.push('svg', 'mjs', 'cjs');
 
-// Enable symlinks if needed
-config.resolver.unstable_enableSymlinks = true;
-
-// Configure transformer for better error handling and bundling
+// Configure transformer for proper bundling
 config.transformer = {
   ...config.transformer,
   getTransformOptions: async () => ({
@@ -18,14 +14,6 @@ config.transformer = {
       inlineRequires: true,
     },
   }),
-  minifierConfig: {
-    keep_classnames: true,
-    keep_fnames: true,
-    mangle: {
-      keep_classnames: true,
-      keep_fnames: true,
-    },
-  },
 };
 
 module.exports = config;
