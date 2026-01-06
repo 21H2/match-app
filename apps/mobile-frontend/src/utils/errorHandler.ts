@@ -14,9 +14,9 @@ export const handleError = (error: unknown, context?: string): void => {
 
 export const safeAsync = async <T>(
   fn: () => Promise<T>,
-  fallback: T,
+  fallback?: T,
   context?: string
-): Promise<T> => {
+): Promise<T | undefined> => {
   try {
     return await fn();
   } catch (error) {
@@ -27,9 +27,9 @@ export const safeAsync = async <T>(
 
 export const safeSync = <T>(
   fn: () => T,
-  fallback: T,
+  fallback?: T,
   context?: string
-): T => {
+): T | undefined => {
   try {
     return fn();
   } catch (error) {

@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, ActivityIndicator, AppState, AppStateStatus } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import ErrorBoundary from '../components/ErrorBoundary';
 import LoadingScreen from '../components/LoadingScreen';
 import { handleError, safeAsync } from '../utils/errorHandler';
@@ -90,27 +91,29 @@ export default function RootLayout() {
   console.log('✅ Rendering main app...');
 
   return (
-    <ErrorBoundary>
-      <StatusBar style="auto" />
-      <Stack
-        screenOptions={{
-          headerStyle: {
-            backgroundColor: '#EE61A1',
-          },
-          headerTintColor: '#fff',
-          headerTitleStyle: {
-            fontWeight: 'bold',
-          },
-          animation: 'fade',
-        }}
-      >
-        <Stack.Screen
-          name="index"
-          options={{
-            title: 'Bunk',
+    <SafeAreaProvider>
+      <ErrorBoundary>
+        <StatusBar style="auto" />
+        <Stack
+          screenOptions={{
+            headerStyle: {
+              backgroundColor: '#EE61A1',
+            },
+            headerTintColor: '#fff',
+            headerTitleStyle: {
+              fontWeight: 'bold',
+            },
+            animation: 'fade',
           }}
-        />
-      </Stack>
-    </ErrorBoundary>
+        >
+          <Stack.Screen
+            name="index"
+            options={{
+              title: 'Bunk',
+            }}
+          />
+        </Stack>
+      </ErrorBoundary>
+    </SafeAreaProvider>
   );
 }
