@@ -65,8 +65,8 @@ jobs:
     
     - name: Build Android APK
       run: |
-        mkdir -p app/src/main/assets
-        chmod +x ./gradlew
+        cd apps/mobile-frontend/android
+        chmod +x gradlew
         export GRADLE_OPTS="-Xmx4096m -XX:MaxMetaspaceSize=1024m"
         ./gradlew assembleRelease --no-daemon --max-workers=2
     
