@@ -1,31 +1,46 @@
 import { ExpoConfig } from "expo/config";
 
 const config: ExpoConfig = {
-  version: "1.0.0",
-  runtimeVersion: {
-    policy: "appVersion"
-  },
   name: "Bunk",
-  scheme: "bunk",
   slug: "bunk-frontend",
+  version: "1.0.0",
   orientation: "portrait",
+  userInterfaceStyle: "automatic",
+  scheme: "bunk",
   platforms: ["ios", "android"],
   
-  plugins: [
-    "expo-router"
-  ],
-  
-  androidStatusBar: {
-    barStyle: "dark-content",
-    backgroundColor: "#ffffff"
+  splash: {
+    backgroundColor: "#ffffff",
+    resizeMode: "contain"
   },
   
   android: {
-    package: "app.bunk.frontend"
+    package: "com.bunk.app",
+    versionCode: 1,
+    adaptiveIcon: {
+      backgroundColor: "#EE61A1"
+    }
   },
   
   ios: {
-    bundleIdentifier: "app.bunk.frontend"
+    bundleIdentifier: "com.bunk.app",
+    buildNumber: "1.0.0",
+    supportsTablet: true
+  },
+  
+  plugins: [
+    "expo-router",
+    [
+      "expo-splash-screen",
+      {
+        backgroundColor: "#ffffff",
+        resizeMode: "contain"
+      }
+    ]
+  ],
+  
+  experiments: {
+    typedRoutes: true
   },
   
   extra: {
