@@ -19,13 +19,20 @@ const config: ExpoConfig = {
     versionCode: 1,
     adaptiveIcon: {
       backgroundColor: "#EE61A1"
-    }
+    },
+    permissions: []
   },
   
   ios: {
     bundleIdentifier: "com.bunk.app",
-    buildNumber: "1.0.0",
+    buildNumber: "1",
     supportsTablet: true
+  },
+  
+  web: {
+    bundler: "metro",
+    output: "static",
+    favicon: undefined
   },
   
   plugins: [

@@ -1,57 +1,115 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView } from 'react-native';
+import React, { useState, useCallback, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import Constants from 'expo-constants';
+import { handleError, safeSync } from '../utils/errorHandler';
+import SafeView from '../components/SafeView';
 
 export default function HomeScreen() {
   const [count, setCount] = useState(0);
+  const [mounted, setMounted] = useState(false);
 
-  const handlePress = () => {
-    setCount(count + 1);
-    Alert.alert(
-      'Success!',
-      `Bunk app is working! Button pressed ${count + 1} times 🎉`,
-      [{ text: 'OK' }]
-    );
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
+
+  const handlePress = useCallback(() => {
+    try {
+      if (!mounted) return;
+      
+      const newCount = count + 1;
+      setCount(newCount);
+      
+      safeSync(
+        () => {
+          Alert.alert(
+            'Success! ✨',
+            `Bunk app is working perfectly!\n\nButton pressed ${newCount} times 🎉`,
+            [{ text: 'Awesome!', style: 'default' }]
+          );
+        },
+        undefined,
+        'Alert display'
+      );
+    } catch (error) {
+      handleError(error, 'Button press');
+    }
+  }, [count, mounted]);
+
+  // Safe rendering with error recovery
+  const getAppInfo = () => {
+    try {
+      return {
+        name: Constants.expoConfig?.name || 'Bunk',
+        version: Constants.expoConfig?.version || '1.0.0',
+        platform: Platform.OS,
+      };
+    } catch (error) {
+      handleError(error, 'Getting app info');
+      return {
+        name: 'Bunk',
+        version: '1.0.0',
+        platform: Platform.OS,
+      };
+    }
   };
 
+  const appInfo = getAppInfo();
+
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <StatusBar style="auto" />
-      
-      <View style={styles.header}>
-        <Text style={styles.title}>Welcome to Bunk!</Text>
-        <Text style={styles.subtitle}>Frontend-only mobile app</Text>
-      </View>
-      
-      <View style={styles.infoContainer}>
-        <View style={styles.card}>
-          <Text style={styles.cardIcon}>✨</Text>
-          <Text style={styles.cardText}>Built with Expo</Text>
+    <SafeView>
+      <ScrollView 
+        contentContainerStyle={styles.container}
+        bounces={true}
+        showsVerticalScrollIndicator={false}
+      >
+        <StatusBar style="auto" />
+        
+        <View style={styles.header}>
+          <Text style={styles.title}>Welcome to Bunk!</Text>
+          <Text style={styles.subtitle}>Frontend-only mobile app</Text>
+          <Text style={styles.platformText}>Running on {appInfo.platform}</Text>
         </View>
-        <View style={styles.card}>
-          <Text style={styles.cardIcon}>📱</Text>
-          <Text style={styles.cardText}>Ready for deployment</Text>
+        
+        <View style={styles.infoContainer}>
+          <View style={styles.card}>
+            <Text style={styles.cardIcon}>✨</Text>
+            <Text style={styles.cardText}>Built with Expo</Text>
+          </View>
+          <View style={styles.card}>
+            <Text style={styles.cardIcon}>📱</Text>
+            <Text style={styles.cardText}>Ready for deployment</Text>
+          </View>
+          <View style={styles.card}>
+            <Text style={styles.cardIcon}>🎨</Text>
+            <Text style={styles.cardText}>Standalone frontend</Text>
+          </View>
+          <View style={styles.card}>
+            <Text style={styles.cardIcon}>🚀</Text>
+            <Text style={styles.cardText}>Version {appInfo.version}</Text>
+          </View>
+          <View style={styles.card}>
+            <Text style={styles.cardIcon}>✅</Text>
+            <Text style={styles.cardText}>All systems operational</Text>
+          </View>
         </View>
-        <View style={styles.card}>
-          <Text style={styles.cardIcon}>🎨</Text>
-          <Text style={styles.cardText}>Standalone frontend</Text>
-        </View>
-        <View style={styles.card}>
-          <Text style={styles.cardIcon}>🚀</Text>
-          <Text style={styles.cardText}>Version 1.0.0</Text>
-        </View>
-      </View>
 
-      <TouchableOpacity style={styles.button} onPress={handlePress}>
-        <Text style={styles.buttonText}>Test App ({count})</Text>
-      </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.button} 
+          onPress={handlePress}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.buttonText}>Test App ({count})</Text>
+        </TouchableOpacity>
 
-      <View style={styles.footer}>
-        <Text style={styles.footerText}>App: {Constants.expoConfig?.name || 'Bunk'}</Text>
-        <Text style={styles.footerText}>Version: {Constants.expoConfig?.version || '1.0.0'}</Text>
-      </View>
-    </ScrollView>
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>App: {appInfo.name}</Text>
+          <Text style={styles.footerText}>Version: {appInfo.version}</Text>
+          <Text style={styles.footerText}>Platform: {appInfo.platform}</Text>
+        </View>
+      </ScrollView>
+    </SafeView>
   );
 }
 
@@ -76,6 +134,12 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 18,
     color: '#666',
+  },
+  platformText: {
+    fontSize: 14,
+    color: '#999',
+    marginTop: 8,
+    textTransform: 'capitalize',
   },
   infoContainer: {
     width: '100%',
