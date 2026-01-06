@@ -9,9 +9,15 @@ export default function HomeScreen() {
   const [count, setCount] = useState(0);
   const [mounted, setMounted] = useState(false);
 
+  console.log('🏠 HomeScreen rendering...');
+
   useEffect(() => {
+    console.log('✅ HomeScreen mounted');
     setMounted(true);
-    return () => setMounted(false);
+    return () => {
+      console.log('❌ HomeScreen unmounting');
+      setMounted(false);
+    };
   }, []);
 
   const handlePress = useCallback(() => {

@@ -7,29 +7,35 @@
 const originalErrorHandler = ErrorUtils.getGlobalHandler();
 
 ErrorUtils.setGlobalHandler((error: Error, isFatal?: boolean) => {
-  console.error('Global error handler:', error, 'isFatal:', isFatal);
+  console.error('=== GLOBAL ERROR ===');
+  console.error('Error:', error);
+  console.error('Message:', error.message);
+  console.error('Stack:', error.stack);
+  console.error('Is Fatal:', isFatal);
+  console.error('===================');
   
   // Call original handler
   if (originalErrorHandler) {
     originalErrorHandler(error, isFatal);
   }
-  
-  // Additional logging or error reporting can be added here
 });
 
 // Handle console errors
 const originalConsoleError = console.error;
 console.error = (...args: any[]) => {
-  originalConsoleError(...args);
-  // Additional error tracking can be added here
+  originalConsoleError('🔴 ERROR:', ...args);
 };
+
+const originalConsoleWarn = console.warn;
+console.warn = (...args: any[]) => {
+  originalConsoleWarn('⚠️ WARNING:', ...args);
+};
+
+console.log('🚀 App starting - Global error handlers active');
 
 // Ensure fetch is available
 if (typeof global.fetch === 'undefined') {
   console.warn('fetch is not available, some features may not work');
 }
-
-// Log app start
-console.log('App initialization - Global error handlers set up');
 
 export {};
