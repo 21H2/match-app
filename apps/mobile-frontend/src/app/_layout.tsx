@@ -36,7 +36,10 @@ export default function RootLayout() {
   }, []);
 
   // Initialize app with comprehensive error handling
-  useEffconsole.log('⏳ Starting app initialization...');
+  useEffect(() => {
+    async function prepare() {
+      try {
+        console.log('⏳ Starting app initialization...');
         
         // Wait for initial setup
         await safeAsync(
@@ -84,10 +87,7 @@ export default function RootLayout() {
     console.warn('⚠️ App initialized with errors:', initError);
   }
 
-  console.log('✅ Rendering main app...');/ Show error if initialization failed but allow app to continue
-  if (initError) {
-    console.warn('App initialized with errors:', initError);
-  }
+  console.log('✅ Rendering main app...');
 
   return (
     <ErrorBoundary>
