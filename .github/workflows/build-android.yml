@@ -80,8 +80,19 @@ jobs:
             print(f"Processing {root_gradle}")
             with open(root_gradle, 'r') as f:
                 content = f.read()
-            if 'kotlinVersion' in content:
-                content = re.sub(r'kotlinVersion\s*=\s*["\'][\d.]+["\']', 'kotlinVersion = "2.0.0', content)
+            
+            # Replace all Kotlin version references (multiple patterns)
+            content = re.sub(r'kotlinVersion\s*=\s*["\'][\d.]+["\']', 'kotlinVersion = "2.0.0"', content)
+            content = re.sub(r'kotlin_version\s*=\s*["\'][\d.]+["\']', 'kotlin_version = "2.0.0"', content)
+            content = re.sub(r'org\.jetbrains\.kotlin:kotlin-gradle-plugin:["\']?[\d.]+["\']?', 'org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.0', content)
+            
+            # If no Kotlin version found, inject it
+            if 'kotlinVersion' not in content and 'kotlin_version' not in content:
+                if 'buildscript {' in content:
+                    content = content.replace('buildscript {', 'buildscript {\n    ext.kotlinVersion = "2.0.0"')
+                elif 'ext {' in content:
+                    content = content.replace('ext {', 'ext {\n        kotlinVersion = "2.0.0"')
+            
             if 'allprojects {' in content and 'gradle.projectsEvaluated' not in content:
                 insert_pos = content.find('allprojects {') + len('allprojects {')
                 metrics_fix = '\n    gradle.projectsEvaluated {\n        tasks.withType(JavaCompile) {\n            options.compilerArgs << "-Xlint:none"\n            options.deprecation = false\n        }\n    }'
