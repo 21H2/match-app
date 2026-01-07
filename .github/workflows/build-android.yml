@@ -106,24 +106,6 @@ jobs:
             f.write(content)
         PYTHON
     
-    - name: Build JavaScript Bundle
-      working-directory: apps/mobile-frontend
-      run: |
-        mkdir -p android/app/src/main/assets
-        npx react-native bundle \
-          --platform android \
-          --dev false \
-          --entry-file index.js \
-          --bundle-output android/app/src/main/assets/index.android.bundle \
-          --assets-dest android/app/src/main/res \
-          --reset-cache
-    
-    - name: Remove duplicate resources
-      run: |
-        cd apps/mobile-frontend/android/app/src/main/res
-        find . -name "drawable-*" -type d -exec rm -rf {} + 2>/dev/null || true
-        find . -name "raw" -type d -exec rm -rf {} + 2>/dev/null || true
-    
     - name: Build Android APK
       run: |
         cd apps/mobile-frontend/android
