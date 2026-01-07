@@ -55,6 +55,18 @@ jobs:
         cd apps/mobile-frontend
         npx expo prebuild --platform android --clean
     
+    - name: Fix Kotlin version compatibility
+      run: |
+        cd apps/mobile-frontend
+        # Force Kotlin 2.0.0 for KSP compatibility
+        if grep -q "kotlinVersion" android/build.gradle; then
+          sed -i 's/kotlinVersion = .*/kotlinVersion = "2.0.0"/' android/build.gradle
+        else
+          sed -i '/buildscript {/a\    ext {\n        kotlinVersion = "2.0.0"\n    }' android/build.gradle
+        fi
+        # Also set in gradle.properties
+        echo "android.kotlinVersion=2.0.0" >> android/gradle.properties
+    
     - name: Setup Release Keystore
       run: |
         cd apps/mobile-frontend
