@@ -55,146 +55,31 @@ jobs:
         cd apps/mobile-frontend
         npx expo prebuild --platform android --clean
     
-    - name: Fix Android Build Issues
-      run: |
-        cd apps/mobile-frontend
-        
-        cat > fix_build.py << 'ENDOFPYTHON'
-        import os
-        import re
-        
-        print("Starting Android build fixes...")
-        
-        app_gradle = 'android/app/build.gradle'
-        if os.path.exists(app_gradle):
-            print(f"Processing {app_gradle}")
-            with open(app_gradle, 'r') as f:
-                content = f.read()
-            content = re.sub(r'^\s*enableBundleCompression.*$', '', content, flags=re.MULTILINE)
-            content = re.sub(r'^\s*hermesCommand.*$', '', content, flags=re.MULTILINE)
-            with open(app_gradle, 'w') as f:
-                f.write(content)
-        
-        root_gradle = 'android/build.gradle'
-        if os.path.exists(root_gradle):
-            print(f"Processing {root_gradle}")
-            with open(root_gradle, 'r') as f:
-                content = f.read()
-            
-            # Replace all Kotlin version references (multiple patterns)
-            content = re.sub(r'kotlinVersion\s*=\s*["\'][\d.]+["\']', 'kotlinVersion = "2.0.0"', content)
-            content = re.sub(r'kotlin_version\s*=\s*["\'][\d.]+["\']', 'kotlin_version = "2.0.0"', content)
-            content = re.sub(r'org\.jetbrains\.kotlin:kotlin-gradle-plugin:["\']?[\d.]+["\']?', 'org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.0', content)
-            
-            # If no Kotlin version found, inject it
-            if 'kotlinVersion' not in content and 'kotlin_version' not in content:
-                if 'buildscript {' in content:
-                    content = content.replace('buildscript {', 'buildscript {\n    ext.kotlinVersion = "2.0.0"')
-                elif 'ext {' in content:
-                    content = content.replace('ext {', 'ext {\n        kotlinVersion = "2.0.0"')
-            
-            if 'allprojects {' in content and 'gradle.projectsEvaluated' not in content:
-                insert_pos = content.find('allprojects {') + len('allprojects {')
-                metrics_fix = '\n    gradle.projectsEvaluated {\n        tasks.withType(JavaCompile) {\n            options.compilerArgs << "-Xlint:none"\n            options.deprecation = false\n        }\n    }'
-                content = content[:insert_pos] + metrics_fix + content[insert_pos:]
-            with open(root_gradle, 'w') as f:
-                f.write(content)
-        
-        gradle_props = 'android/gradle.properties'
-        props_to_add = [
-            'org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=1024m -XX:+HeapDumpOnOutOfMemoryError',
-            'org.gradle.warning.mode=none',
-            'org.gradle.configureondemand=false',
-            'org.gradle.configuration-cache=false',
-            'org.gradle.unsafe.configuration-cache=false',
-            'org.gradle.caching=false',
-            'org.gradle.parallel=false',
-            'android.enableJetifier=true',
-            'android.useAndroidX=true',
-            'android.builder.sdkDownload=false'
-        ]
-        if os.path.exists(gradle_props):
-            with open(gradle_props, 'r') as f:
-                existing_content = f.read()
-            with open(gradle_props, 'a') as f:
-                for prop in props_to_add:
-                    prop_key = prop.split('=')[0]
-                    if prop_key not in existing_content:
-                        f.write(f'\n{prop}')
-        print("Fixes applied successfully.")
-        ENDOFPYTHON
-        
-        python3 fix_build.py
-        rm fix_build.py
-    
     - name: Setup Release Keystore
       run: |
         cd apps/mobile-frontend
         mkdir -p android/app
-        keytool -genkeypair -v -storetype PKCS12 -keystore android/app/release.keystore -alias release -keyalg RSA -keysize 2048 -validity 10000 -storepass android -keypass android -dname "CN=Android Release,O=Android,C=US"
+        keytool -genkeypair -v -storetype PKCS12 -keystore android/app/debug.keystore -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -storepass android -keypass android -dname "CN=Android Debug,O=Android,C=US"
     
-    - name: Configure Gradle signing
+    - name: Build JavaScript Bundle
       run: |
         cd apps/mobile-frontend
-        # Add signing properties with proper newline
-        echo "" >> android/gradle.properties
-        cat >> android/gradle.properties << 'EOF'
-        MYAPP_RELEASE_STORE_FILE=release.keystore
-        MYAPP_RELEASE_KEY_ALIAS=release
-        MYAPP_RELEASE_STORE_PASSWORD=android
-        MYAPP_RELEASE_KEY_PASSWORD=android
-        EOF
-        
-        # Patch build.gradle for signing
-        python3 << 'PYTHON'
-        import re
-        
-        with open('android/app/build.gradle', 'r') as f:
-            content = f.read()
-        
-        # Add signingConfigs if not present
-        if 'signingConfigs' not in content:
-            signing_config = '''    signingConfigs {
-                release {
-                    if (project.hasProperty('MYAPP_RELEASE_STORE_FILE')) {
-                        storeFile file(MYAPP_RELEASE_STORE_FILE)
-                        storePassword MYAPP_RELEASE_STORE_PASSWORD
-                        keyAlias MYAPP_RELEASE_KEY_ALIAS
-                        keyPassword MYAPP_RELEASE_KEY_PASSWORD
-                    }
-                }
-            }
-        '''
-            content = re.sub(r'(buildTypes\s*{)', signing_config + r'\n    \1', content)
-        
-        # Add signingConfig to release buildType
-        if 'signingConfig signingConfigs.release' not in content:
-            content = re.sub(
-                r'(release\s*{)',
-                r'\1\n            signingConfig signingConfigs.release',
-                content
-            )
-        
-        with open('android/app/build.gradle', 'w') as f:
-            f.write(content)
-        PYTHON
+        mkdir -p android/app/src/main/assets
+        mkdir -p android/app/src/main/res
+        npx react-native bundle \
+          --platform android \
+          --dev false \
+          --entry-file index.js \
+          --bundle-output android/app/src/main/assets/index.android.bundle \
+          --assets-dest android/app/src/main/res \
+          --reset-cache
     
     - name: Build Android APK
       run: |
         cd apps/mobile-frontend/android
         chmod +x gradlew
-        
-        # Disable Gradle metrics and daemon for CI
-        export GRADLE_OPTS="-Xmx4096m -XX:MaxMetaspaceSize=1024m -XX:+HeapDumpOnOutOfMemoryError -Dorg.gradle.internal.launcher.welcomeMessageEnabled=false"
-        
-        # Run build with aggressive caching and metrics disabled
-        ./gradlew clean assembleRelease \
-          --no-daemon \
-          --no-build-cache \
-          --no-configuration-cache \
-          --max-workers=2 \
-          --stacktrace \
-          --info
+        export GRADLE_OPTS="-Xmx4096m -XX:MaxMetaspaceSize=1024m"
+        ./gradlew assembleRelease --no-daemon --max-workers=2 --stacktrace
     
     - name: Upload APK
       uses: actions/upload-artifact@v4
