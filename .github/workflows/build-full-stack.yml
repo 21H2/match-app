@@ -331,6 +331,7 @@ jobs:
         run: |
           mkdir -p android/app
           cd android/app
+          rm -f debug.keystore
           keytool -genkeypair -v -storetype PKCS12 -keystore debug.keystore \
             -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 \
             -storepass android -keypass android \
