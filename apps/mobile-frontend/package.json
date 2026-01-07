@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "name": "@bunk/mobile-frontend",
+  "name": "@pegada/mobile-frontend",
   "main": "index.js",
   "private": true,
   "scripts": {

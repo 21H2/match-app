@@ -318,40 +318,32 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Install mobile-frontend dependencies
-        run: |
-          cd apps/mobile-frontend
-          pnpm install --frozen-lockfile
-
       - name: Generate Android files
+        working-directory: apps/mobile-frontend
         run: |
-          cd apps/mobile-frontend
+          npx expo install expo@~54.0.0
           npx expo prebuild --platform android --clean
 
       - name: Setup Debug Keystore
+        working-directory: apps/mobile-frontend
         run: |
-          cd apps/mobile-frontend/android/app
+          mkdir -p android/app
+          cd android/app
           keytool -genkeypair -v -storetype PKCS12 -keystore debug.keystore \
             -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 \
             -storepass android -keypass android \
             -dname "CN=Android Debug,O=Android,C=US"
 
       - name: Build JavaScript Bundle
+        working-directory: apps/mobile-frontend
         run: |
-          cd apps/mobile-frontend
           mkdir -p android/app/src/main/assets
           mkdir -p android/app/src/main/res
-          npx react-native bundle \
-            --platform android \
-            --dev false \
-            --entry-file index.js \
-            --bundle-output android/app/src/main/assets/index.android.bundle \
-            --assets-dest android/app/src/main/res \
-            --reset-cache
+          npx expo export:embed --entry-file index.js --platform android --dev false
 
       - name: Build Android APK
+        working-directory: apps/mobile-frontend/android
         run: |
-          cd apps/mobile-frontend/android
           chmod +x gradlew
           export GRADLE_OPTS="-Xmx4096m -XX:MaxMetaspaceSize=1024m"
           ./gradlew assembleRelease --no-daemon --max-workers=2 --stacktrace
