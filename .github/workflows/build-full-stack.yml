@@ -356,7 +356,7 @@ jobs:
 
       - name: Create Release (on main push)
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: apps/mobile-frontend/android/app/build/outputs/apk/release/*.apk
           tag_name: v1.0.${{ github.run_number }}
