@@ -66,6 +66,9 @@ jobs:
         fi
         # Also set in gradle.properties
         echo "android.kotlinVersion=2.0.0" >> android/gradle.properties
+        
+        # Remove unsupported React properties
+        sed -i '/enableBundleCompression/d' android/app/build.gradle
     
     - name: Setup Release Keystore
       run: |
