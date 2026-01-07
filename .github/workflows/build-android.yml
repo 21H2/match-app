@@ -14,24 +14,20 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      packages: write
     
     steps:
-    - name: Checkout repository
+    - name: Checkout code
       uses: actions/checkout@v4
-    
-    - name: Setup pnpm
-      uses: pnpm/action-setup@v2
-      with:
-        version: 9
     
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '20'
-        cache: 'pnpm'
+    
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4
+      with:
+        version: 9
     
     - name: Setup Java
       uses: actions/setup-java@v4
@@ -42,60 +38,23 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
     
-    - name: Accept Android SDK licenses
-      run: yes | sdkmanager --licenses || true
-    
     - name: Install dependencies
-      run: |
-        cd apps/mobile-frontend
-        pnpm install
+      working-directory: apps/mobile-frontend
+      run: pnpm install --frozen-lockfile
     
-    - name: Generate Android files
-      run: |
-        cd apps/mobile-frontend
-        npx expo prebuild --platform android --clean
+    - name: Prebuild Android
+      working-directory: apps/mobile-frontend
+      run: npx expo prebuild --platform android --clean
     
-    - name: Setup Release Keystore
+    - name: Build APK
+      working-directory: apps/mobile-frontend
       run: |
-        cd apps/mobile-frontend
-        mkdir -p android/app
-        keytool -genkeypair -v -storetype PKCS12 -keystore android/app/debug.keystore -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -storepass android -keypass android -dname "CN=Android Debug,O=Android,C=US"
-    
-    - name: Build JavaScript Bundle
-      run: |
-        cd apps/mobile-frontend
-        mkdir -p android/app/src/main/assets
-        mkdir -p android/app/src/main/res
-        npx react-native bundle \
-          --platform android \
-          --dev false \
-          --entry-file index.js \
-          --bundle-output android/app/src/main/assets/index.android.bundle \
-          --assets-dest android/app/src/main/res \
-          --reset-cache
-    
-    - name: Build Android APK
-      run: |
-        cd apps/mobile-frontend/android
-        chmod +x gradlew
-        export GRADLE_OPTS="-Xmx4096m -XX:MaxMetaspaceSize=1024m"
-        ./gradlew assembleRelease --no-daemon --max-workers=2 --stacktrace
+        cd android
+        ./gradlew assembleRelease
     
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
-        name: bunk-app-release
-        path: apps/mobile-frontend/android/app/build/outputs/apk/release/*.apk
+        name: app-release
+        path: apps/mobile-frontend/android/app/build/outputs/apk/release/app-release.apk
         retention-days: 30
-    
-    - name: Create Release
-      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-      uses: softprops/action-gh-release@v1
-      with:
-        files: apps/mobile-frontend/android/app/build/outputs/apk/release/*.apk
-        tag_name: v1.0.${{ github.run_number }}
-        name: Release Build v1.0.${{ github.run_number }}
-        draft: false
-        prerelease: false
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
