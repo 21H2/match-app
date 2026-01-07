@@ -326,17 +326,12 @@ jobs:
         working-directory: apps/mobile-frontend
         run: npx expo prebuild --platform android --clean
 
-      - name: Setup Debug Keystore
-        working-directory: apps/mobile-frontend/android/app
+      - name: Clear old keystores and gradle cache
+        working-directory: apps/mobile-frontend
         run: |
-          # Delete existing keystore and alias to avoid conflicts
-          rm -f debug.keystore
-          # Generate new keystore
-          keytool -genkeypair -v -storetype PKCS12 -keystore debug.keystore \
-            -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 \
-            -storepass android -keypass android \
-            -noprompt \
-            -dname "CN=Android Debug,O=Android,C=US" || true
+          rm -rf ~/.android/debug.keystore
+          rm -rf android/app/debug.keystore
+          rm -rf android/.gradle
 
       - name: Build Android APK
         working-directory: apps/mobile-frontend/android
