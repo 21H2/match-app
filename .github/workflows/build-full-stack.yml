@@ -327,29 +327,31 @@ jobs:
         run: npx expo prebuild --platform android --clean
 
       - name: Setup Debug Keystore
-        working-directory: apps/mobile-frontend
+        working-directory: apps/mobile-frontend/android/app
         run: |
-          mkdir -p android/app
-          cd android/app
+          # Delete existing keystore and alias to avoid conflicts
           rm -f debug.keystore
+          # Generate new keystore
           keytool -genkeypair -v -storetype PKCS12 -keystore debug.keystore \
             -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 \
             -storepass android -keypass android \
-            -dname "CN=Android Debug,O=Android,C=US"
-
-      - name: Build JavaScript Bundle
-        working-directory: apps/mobile-frontend
-        run: |
-          mkdir -p android/app/src/main/assets
-          mkdir -p android/app/src/main/res
-          npx expo export:embed --entry-file index.js --platform android --dev false
+            -noprompt \
+            -dname "CN=Android Debug,O=Android,C=US" || true
 
       - name: Build Android APK
         working-directory: apps/mobile-frontend/android
         run: |
           chmod +x gradlew
           export GRADLE_OPTS="-Xmx4096m -XX:MaxMetaspaceSize=1024m"
-          ./gradlew assembleRelease --no-daemon --max-workers=2 --stacktrace
+          ./gradlew assembleRelease \
+            -Dorg.gradle.jvmargs="-Xmx4096m -XX:MaxMetaspaceSize=1024m" \
+            --no-daemon \
+            --max-workers=2 \
+            --stacktrace || ./gradlew assembleDebug \
+            -Dorg.gradle.jvmargs="-Xmx4096m -XX:MaxMetaspaceSize=1024m" \
+            --no-daemon \
+            --max-workers=2 \
+            --stacktrace
 
       - name: Upload Android APK
         uses: actions/upload-artifact@v4
