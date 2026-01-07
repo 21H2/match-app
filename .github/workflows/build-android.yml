@@ -88,7 +88,7 @@ jobs:
             with open(app_gradle, 'w') as f:
                 f.writelines(new_lines)
         
-        # 2. Fix root build.gradle Kotlin version
+        # 2. Fix root build.gradle Kotlin version and suppress deprecation
         root_gradle = 'android/build.gradle'
         if os.path.exists(root_gradle):
             print(f"Processing {root_gradle}")
@@ -101,13 +101,35 @@ jobs:
             elif 'ext {' in content:
                 content = content.replace('ext {', 'ext {\n        kotlinVersion = "2.0.0"')
             
+            # Suppress Deprecation Warnings in JavaCompile
+            if 'allprojects {' in content:
+                content = content.replace('allprojects {', '''allprojects {
+    tasks.withType(JavaCompile) {
+        options.compilerArgs << "-Xlint:none"
+        options.deprecation = false
+    }
+''')
+            
             with open(root_gradle, 'w') as f:
                 f.write(content)
                 
         # 3. Add overrides to gradle.properties
         with open('android/gradle.properties', 'a') as f:
             f.write('\nandroid.kotlinVersion=2.0.0\n')
+            f.write('org.gradle.warning.mode=none\n')
             
+        # 4. Remove potential metrics/statistics plugins from app/build.gradle
+        if os.path.exists(app_gradle):
+             with open(app_gradle, 'r') as f:
+                content = f.read()
+             output = []
+             for line in content.splitlines():
+                 if 'statistics-collector' in line:
+                     continue
+                 output.append(line)
+             with open(app_gradle, 'w') as f:
+                f.write('\n'.join(output))
+
         print("Fixes applied successfully.")
         PYTHON
     
