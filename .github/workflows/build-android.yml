@@ -81,7 +81,7 @@ jobs:
             with open(root_gradle, 'r') as f:
                 content = f.read()
             if 'kotlinVersion' in content:
-                content = re.sub(r'kotlinVersion\s*=\s*["\'][\d.]+["\']', 'kotlinVersion = "1.9.22"', content)
+                content = re.sub(r'kotlinVersion\s*=\s*["\'][\d.]+["\']', 'kotlinVersion = "2.0.0', content)
             if 'allprojects {' in content and 'gradle.projectsEvaluated' not in content:
                 insert_pos = content.find('allprojects {') + len('allprojects {')
                 metrics_fix = '\n    gradle.projectsEvaluated {\n        tasks.withType(JavaCompile) {\n            options.compilerArgs << "-Xlint:none"\n            options.deprecation = false\n        }\n    }'
