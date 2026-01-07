@@ -107,13 +107,13 @@ jobs:
         PYTHON
     
     - name: Build JavaScript Bundle
+      working-directory: apps/mobile-frontend
       run: |
-        cd apps/mobile-frontend
         mkdir -p android/app/src/main/assets
         npx react-native bundle \
           --platform android \
           --dev false \
-          --entry-file ./index.js \
+          --entry-file index.js \
           --bundle-output android/app/src/main/assets/index.android.bundle \
           --assets-dest android/app/src/main/res \
           --reset-cache
