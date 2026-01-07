@@ -1,0 +1,25 @@
+#!/bin/bash
+
+echo "🚀 Starting Expo Metro with Tunnel (for Codespaces)"
+echo "=================================================="
+echo ""
+echo "This will:"
+echo "  1. Start Metro bundler"
+echo "  2. Create ngrok tunnel automatically via Expo"
+echo "  3. Show QR code to scan with Expo Go app"
+echo ""
+echo "📱 On your phone:"
+echo "  1. Install 'Expo Go' from Play Store/App Store"
+echo "  2. Open Expo Go app"
+echo "  3. Scan the QR code that appears below"
+echo ""
+echo "⚡ Features:"
+echo "  - Live reload on code changes"
+echo "  - Hot refresh without losing state"
+echo "  - See errors instantly on phone"
+echo ""
+echo "Starting Metro..."
+echo ""
+
+cd "$(dirname "$0")"
+pnpm start:tunnel

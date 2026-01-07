@@ -65,12 +65,14 @@ export default function RootLayout() {
         console.log('✅ App is ready');
         
         // Hide splash screen
-        try {
-          await SplashScreen.hideAsync();
-          console.log('✅ Splash screen hidden');
-        } catch (error) {
-          console.warn('⚠️ SplashScreen.hideAsync error:', error);
-        }
+        setTimeout(async () => {
+          try {
+            await SplashScreen.hideAsync();
+            console.log('✅ Splash screen hidden');
+          } catch (error) {
+            console.warn('⚠️ SplashScreen.hideAsync error:', error);
+          }
+        }, 100);
       }
     }
 
@@ -80,7 +82,7 @@ export default function RootLayout() {
   // Show loading screen while app is not ready
   if (!appIsReady) {
     console.log('⏳ Showing loading screen...');
-    return <LoadingScreen message="Initializing Bunk..." />;
+    return <LoadingScreen message="Loading Pegada..." />;
   }
 
   // Show error if initialization failed but allow app to continue
@@ -109,7 +111,7 @@ export default function RootLayout() {
           <Stack.Screen
             name="index"
             options={{
-              title: 'Bunk',
+              title: 'Pegada - Dog Dating',
             }}
           />
         </Stack>

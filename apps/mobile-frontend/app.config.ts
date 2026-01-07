@@ -1,30 +1,31 @@
 import { ExpoConfig } from "expo/config";
 
 const config: ExpoConfig = {
-  name: "Bunk",
-  slug: "bunk-frontend",
+  name: "Pegada",
+  slug: "pegada-mobile",
   version: "1.0.0",
   orientation: "portrait",
   userInterfaceStyle: "automatic",
-  scheme: "bunk",
+  scheme: "pegada",
   platforms: ["ios", "android"],
   
   splash: {
-    backgroundColor: "#ffffff",
+    backgroundColor: "#EE61A1",
     resizeMode: "contain"
   },
   
   android: {
-    package: "com.bunk.app",
+    package: "app.pegada",
     versionCode: 1,
     adaptiveIcon: {
       backgroundColor: "#EE61A1"
     },
-    permissions: []
+    permissions: [],
+    softwareKeyboardLayoutMode: "pan"
   },
   
   ios: {
-    bundleIdentifier: "com.bunk.app",
+    bundleIdentifier: "app.pegada",
     buildNumber: "1",
     supportsTablet: true
   },

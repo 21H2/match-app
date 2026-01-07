@@ -30,9 +30,9 @@ export default function HomeScreen() {
       safeSync(
         () => {
           Alert.alert(
-            'Success! ✨',
-            `Bunk app is working perfectly!\n\nButton pressed ${newCount} times 🎉`,
-            [{ text: 'Awesome!', style: 'default' }]
+            '🐕 Woof! ✨',
+            `Pegada is ready!\n\nConnect your furry friend with their perfect match 🐾\n\nButton pressed ${newCount} times`,
+            [{ text: 'Let\'s Go!', style: 'default' }]
           );
         },
         undefined,
@@ -47,14 +47,14 @@ export default function HomeScreen() {
   const getAppInfo = () => {
     try {
       return {
-        name: Constants.expoConfig?.name || 'Bunk',
+        name: Constants.expoConfig?.name || 'Pegada',
         version: Constants.expoConfig?.version || '1.0.0',
         platform: Platform.OS,
       };
     } catch (error) {
       handleError(error, 'Getting app info');
       return {
-        name: 'Bunk',
+        name: 'Pegada',
         version: '1.0.0',
         platform: Platform.OS,
       };
@@ -73,27 +73,27 @@ export default function HomeScreen() {
         <StatusBar style="auto" />
         
         <View style={styles.header}>
-          <Text style={styles.title}>Welcome to Bunk!</Text>
-          <Text style={styles.subtitle}>Frontend-only mobile app</Text>
+          <Text style={styles.title}>Welcome to Pegada!</Text>
+          <Text style={styles.subtitle}>🐕 Dog Dating & Social App</Text>
           <Text style={styles.platformText}>Running on {appInfo.platform}</Text>
         </View>
         
         <View style={styles.infoContainer}>
           <View style={styles.card}>
-            <Text style={styles.cardIcon}>✨</Text>
-            <Text style={styles.cardText}>Built with Expo</Text>
+            <Text style={styles.cardIcon}>🐕</Text>
+            <Text style={styles.cardText}>Find perfect playdates</Text>
+          </View>
+          <View style={styles.card}>
+            <Text style={styles.cardIcon}>💕</Text>
+            <Text style={styles.cardText}>Match with dog friends</Text>
           </View>
           <View style={styles.card}>
             <Text style={styles.cardIcon}>📱</Text>
-            <Text style={styles.cardText}>Ready for deployment</Text>
+            <Text style={styles.cardText}>Chat with pet owners</Text>
           </View>
           <View style={styles.card}>
-            <Text style={styles.cardIcon}>🎨</Text>
-            <Text style={styles.cardText}>Standalone frontend</Text>
-          </View>
-          <View style={styles.card}>
-            <Text style={styles.cardIcon}>🚀</Text>
-            <Text style={styles.cardText}>Version {appInfo.version}</Text>
+            <Text style={styles.cardIcon}>🌍</Text>
+            <Text style={styles.cardText}>Connect locally</Text>
           </View>
           <View style={styles.card}>
             <Text style={styles.cardIcon}>✅</Text>
@@ -106,7 +106,7 @@ export default function HomeScreen() {
           onPress={handlePress}
           activeOpacity={0.7}
         >
-          <Text style={styles.buttonText}>Test App ({count})</Text>
+          <Text style={styles.buttonText}>Start Matching ({count})</Text>
         </TouchableOpacity>
 
         <View style={styles.footer}>

@@ -52,41 +52,46 @@ jobs:
         cd apps/mobile-frontend
         npx expo prebuild --platform android --clean
     
+    - name: Setup Release Keystore
+      run: |
+        cd apps/mobile-frontend/android/app
+        keytool -genkeypair -v -storetype PKCS12 -keystore debug.keystore -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -storepass android -keypass android -dname "CN=Android Debug,O=Android,C=US"
+    
     - name: Build JavaScript Bundle
       run: |
         cd apps/mobile-frontend
         mkdir -p android/app/src/main/assets
-        mkdir -p android/app/src/debug/assets
+        mkdir -p android/app/src/main/res
         npx react-native bundle \
           --platform android \
-          --dev true \
+          --dev false \
           --entry-file index.js \
           --bundle-output android/app/src/main/assets/index.android.bundle \
-          --assets-dest android/app/src/main/res
-        cp android/app/src/main/assets/index.android.bundle android/app/src/debug/assets/ || true
+          --assets-dest android/app/src/main/res \
+          --reset-cache
     
     - name: Build Android APK
       run: |
         cd apps/mobile-frontend/android
         chmod +x gradlew
         export GRADLE_OPTS="-Xmx4096m -XX:MaxMetaspaceSize=1024m"
-        ./gradlew assembleDebug --no-daemon --max-workers=2 --stacktrace
+        ./gradlew assembleRelease --no-daemon --max-workers=2 --stacktrace
     
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
-        name: bunk-app-debug
-        path: apps/mobile-frontend/android/app/build/outputs/apk/debug/*.apk
+        name: bunk-app-release
+        path: apps/mobile-frontend/android/app/build/outputs/apk/release/*.apk
         retention-days: 30
     
     - name: Create Release
       if: github.event_name == 'push' && github.ref == 'refs/heads/main'
       uses: softprops/action-gh-release@v1
       with:
-        files: apps/mobile-frontend/android/app/build/outputs/apk/debug/*.apk
-        tag_name: debug-v1.0.${{ github.run_number }}
-        name: Debug Build v1.0.${{ github.run_number }}
+        files: apps/mobile-frontend/android/app/build/outputs/apk/release/*.apk
+        tag_name: v1.0.${{ github.run_number }}
+        name: Release Build v1.0.${{ github.run_number }}
         draft: false
-        prerelease: true
+        prerelease: false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
