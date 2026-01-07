@@ -315,14 +315,16 @@ jobs:
             tools/*/node_modules
           key: ${{ runner.os }}-node-modules-${{ hashFiles('**/pnpm-lock.yaml') }}
 
-      - name: Install dependencies
+      - name: Install root dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install mobile-frontend dependencies
+        working-directory: apps/mobile-frontend
         run: pnpm install --frozen-lockfile
 
       - name: Generate Android files
         working-directory: apps/mobile-frontend
-        run: |
-          npx expo install expo@~54.0.0
-          npx expo prebuild --platform android --clean
+        run: npx expo prebuild --platform android --clean
 
       - name: Setup Debug Keystore
         working-directory: apps/mobile-frontend
