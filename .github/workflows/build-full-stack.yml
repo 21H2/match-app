@@ -322,16 +322,15 @@ jobs:
         working-directory: apps/mobile-frontend
         run: pnpm install --frozen-lockfile
 
+      - name: Clear old keystores and gradle cache
+        run: |
+          rm -rf ~/.android/debug.keystore
+          rm -rf ~/.android/*.keystore
+          rm -rf apps/mobile-frontend/android/app/*.keystore
+
       - name: Generate Android files
         working-directory: apps/mobile-frontend
         run: npx expo prebuild --platform android --clean
-
-      - name: Clear old keystores and gradle cache
-        working-directory: apps/mobile-frontend
-        run: |
-          rm -rf ~/.android/debug.keystore
-          rm -rf android/app/debug.keystore
-          rm -rf android/.gradle
 
       - name: Build Android APK
         working-directory: apps/mobile-frontend/android

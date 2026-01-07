@@ -42,6 +42,9 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
     
+    - name: Accept Android SDK licenses
+      run: yes | sdkmanager --licenses || true
+    
     - name: Install dependencies
       run: |
         cd apps/mobile-frontend
@@ -54,14 +57,59 @@ jobs:
     
     - name: Setup Release Keystore
       run: |
-        cd apps/mobile-frontend/android/app
-        keytool -genkeypair -v -storetype PKCS12 -keystore debug.keystore -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -storepass android -keypass android -dname "CN=Android Debug,O=Android,C=US"
+        cd apps/mobile-frontend
+        mkdir -p android/app
+        keytool -genkeypair -v -storetype PKCS12 -keystore android/app/release.keystore -alias release -keyalg RSA -keysize 2048 -validity 10000 -storepass android -keypass android -dname "CN=Android Release,O=Android,C=US"
+    
+    - name: Configure Gradle signing
+      run: |
+        cd apps/mobile-frontend
+        # Add signing properties
+        cat >> android/gradle.properties << 'EOF'
+        MYAPP_RELEASE_STORE_FILE=release.keystore
+        MYAPP_RELEASE_KEY_ALIAS=release
+        MYAPP_RELEASE_STORE_PASSWORD=android
+        MYAPP_RELEASE_KEY_PASSWORD=android
+        EOF
+        
+        # Patch build.gradle for signing
+        python3 << 'PYTHON'
+        import re
+        
+        with open('android/app/build.gradle', 'r') as f:
+            content = f.read()
+        
+        # Add signingConfigs if not present
+        if 'signingConfigs' not in content:
+            signing_config = '''    signingConfigs {
+                release {
+                    if (project.hasProperty('MYAPP_RELEASE_STORE_FILE')) {
+                        storeFile file(MYAPP_RELEASE_STORE_FILE)
+                        storePassword MYAPP_RELEASE_STORE_PASSWORD
+                        keyAlias MYAPP_RELEASE_KEY_ALIAS
+                        keyPassword MYAPP_RELEASE_KEY_PASSWORD
+                    }
+                }
+            }
+        '''
+            content = re.sub(r'(buildTypes\s*{)', signing_config + r'\n    \1', content)
+        
+        # Add signingConfig to release buildType
+        if 'signingConfig signingConfigs.release' not in content:
+            content = re.sub(
+                r'(release\s*{)',
+                r'\1\n            signingConfig signingConfigs.release',
+                content
+            )
+        
+        with open('android/app/build.gradle', 'w') as f:
+            f.write(content)
+        PYTHON
     
     - name: Build JavaScript Bundle
       run: |
         cd apps/mobile-frontend
         mkdir -p android/app/src/main/assets
-        mkdir -p android/app/src/main/res
         npx react-native bundle \
           --platform android \
           --dev false \
@@ -70,12 +118,18 @@ jobs:
           --assets-dest android/app/src/main/res \
           --reset-cache
     
+    - name: Remove duplicate resources
+      run: |
+        cd apps/mobile-frontend/android/app/src/main/res
+        find . -name "drawable-*" -type d -exec rm -rf {} + 2>/dev/null || true
+        find . -name "raw" -type d -exec rm -rf {} + 2>/dev/null || true
+    
     - name: Build Android APK
       run: |
         cd apps/mobile-frontend/android
         chmod +x gradlew
-        export GRADLE_OPTS="-Xmx4096m -XX:MaxMetaspaceSize=1024m"
-        ./gradlew assembleRelease --no-daemon --max-workers=2 --stacktrace
+        export GRADLE_OPTS="-Xmx4096m -XX:MaxMetaspaceSize=1024m -XX:+HeapDumpOnOutOfMemoryError"
+        ./gradlew clean assembleRelease --no-daemon --max-workers=2 --stacktrace --info
     
     - name: Upload APK
       uses: actions/upload-artifact@v4
