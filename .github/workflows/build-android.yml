@@ -59,7 +59,7 @@ jobs:
       run: |
         cd apps/mobile-frontend
         
-        python3 << 'EOF'
+        cat > fix_build.py << 'ENDOFPYTHON'
         import os
         import re
         
@@ -69,43 +69,49 @@ jobs:
         if os.path.exists(app_gradle):
             print(f"Processing {app_gradle}")
             with open(app_gradle, 'r') as f:
-                lines = f.readlines()
-            
-            new_lines = []
-            for line in lines:
-                stripped = line.strip()
-                if 'enableBundleCompression' in stripped or 'hermesCommand' in stripped or 'statistics-collector' in stripped:
-                    print(f"Removing deprecated: {stripped}")
-                    continue
-                new_lines.append(line)
-            
+                content = f.read()
+            content = re.sub(r'^\s*enableBundleCompression.*$', '', content, flags=re.MULTILINE)
+            content = re.sub(r'^\s*hermesCommand.*$', '', content, flags=re.MULTILINE)
             with open(app_gradle, 'w') as f:
-                f.writelines(new_lines)
+                f.write(content)
         
         root_gradle = 'android/build.gradle'
         if os.path.exists(root_gradle):
             print(f"Processing {root_gradle}")
             with open(root_gradle, 'r') as f:
                 content = f.read()
-            
-            if 'kotlinVersion =' in content:
-                content = re.sub(r'kotlinVersion\s*=\s*.*', 'kotlinVersion = "2.0.0"', content)
-            elif 'ext {' in content:
-                content = content.replace('ext {', 'ext {\n        kotlinVersion = "2.0.0"')
-            
-            deprecation_fix = 'allprojects {\n    tasks.withType(JavaCompile) {\n        options.compilerArgs << "-Xlint:none"\n        options.deprecation = false\n    }'
-            if 'allprojects {' in content:
-                content = content.replace('allprojects {', deprecation_fix)
-            
+            if 'kotlinVersion' in content:
+                content = re.sub(r'kotlinVersion\s*=\s*["\'][\d.]+["\']', 'kotlinVersion = "1.9.22"', content)
+            if 'allprojects {' in content and 'gradle.projectsEvaluated' not in content:
+                insert_pos = content.find('allprojects {') + len('allprojects {')
+                metrics_fix = '\n    gradle.projectsEvaluated {\n        tasks.withType(JavaCompile) {\n            options.compilerArgs << "-Xlint:none"\n            options.deprecation = false\n        }\n    }'
+                content = content[:insert_pos] + metrics_fix + content[insert_pos:]
             with open(root_gradle, 'w') as f:
                 f.write(content)
-                
-        with open('android/gradle.properties', 'a') as f:
-            f.write('\nandroid.kotlinVersion=2.0.0\n')
-            f.write('org.gradle.warning.mode=none\n')
-
+        
+        gradle_props = 'android/gradle.properties'
+        props_to_add = [
+            'org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=1024m',
+            'org.gradle.warning.mode=none',
+            'org.gradle.configureondemand=false',
+            'org.gradle.configuration-cache=false',
+            'org.gradle.unsafe.configuration-cache=false',
+            'android.enableJetifier=true',
+            'android.useAndroidX=true'
+        ]
+        if os.path.exists(gradle_props):
+            with open(gradle_props, 'r') as f:
+                existing_content = f.read()
+            with open(gradle_props, 'a') as f:
+                for prop in props_to_add:
+                    prop_key = prop.split('=')[0]
+                    if prop_key not in existing_content:
+                        f.write(f'\n{prop}')
         print("Fixes applied successfully.")
-        EOF
+        ENDOFPYTHON
+        
+        python3 fix_build.py
+        rm fix_build.py
     
     - name: Setup Release Keystore
       run: |
