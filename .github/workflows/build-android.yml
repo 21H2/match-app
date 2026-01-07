@@ -133,7 +133,8 @@ jobs:
     - name: Configure Gradle signing
       run: |
         cd apps/mobile-frontend
-        # Add signing properties
+        # Add signing properties with proper newline
+        echo "" >> android/gradle.properties
         cat >> android/gradle.properties << 'EOF'
         MYAPP_RELEASE_STORE_FILE=release.keystore
         MYAPP_RELEASE_KEY_ALIAS=release
