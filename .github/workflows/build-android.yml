@@ -102,13 +102,16 @@ jobs:
         
         gradle_props = 'android/gradle.properties'
         props_to_add = [
-            'org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=1024m',
+            'org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=1024m -XX:+HeapDumpOnOutOfMemoryError',
             'org.gradle.warning.mode=none',
             'org.gradle.configureondemand=false',
             'org.gradle.configuration-cache=false',
             'org.gradle.unsafe.configuration-cache=false',
+            'org.gradle.caching=false',
+            'org.gradle.parallel=false',
             'android.enableJetifier=true',
-            'android.useAndroidX=true'
+            'android.useAndroidX=true',
+            'android.builder.sdkDownload=false'
         ]
         if os.path.exists(gradle_props):
             with open(gradle_props, 'r') as f:
@@ -180,8 +183,18 @@ jobs:
       run: |
         cd apps/mobile-frontend/android
         chmod +x gradlew
-        export GRADLE_OPTS="-Xmx4096m -XX:MaxMetaspaceSize=1024m -XX:+HeapDumpOnOutOfMemoryError"
-        ./gradlew clean assembleRelease --no-daemon --max-workers=2 --stacktrace --info
+        
+        # Disable Gradle metrics and daemon for CI
+        export GRADLE_OPTS="-Xmx4096m -XX:MaxMetaspaceSize=1024m -XX:+HeapDumpOnOutOfMemoryError -Dorg.gradle.internal.launcher.welcomeMessageEnabled=false"
+        
+        # Run build with aggressive caching and metrics disabled
+        ./gradlew clean assembleRelease \
+          --no-daemon \
+          --no-build-cache \
+          --no-configuration-cache \
+          --max-workers=2 \
+          --stacktrace \
+          --info
     
     - name: Upload APK
       uses: actions/upload-artifact@v4
